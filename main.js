@@ -53,7 +53,15 @@ var app = http.createServer(function(request,response){
           fs.readFile(`data/${queryData.id}`,'utf8', function(err,description){
             var title = queryData.id;
             var list = templateList(filelist);
-            var template = templateHTML(title, list,`<h2>${title}</h2><p>${description}</p>`,`<a href="/create">create</a> <a href="/update?id=${title}">update</a>`);
+            var template = templateHTML(title, list,
+              `<h2>${title}</h2><p>${description}</p>`,
+              ` <a href="/create">create</a>
+                <a href="/update?id=${title}">update</a>
+                <form action="delete_process" method="post">
+                  <input type="hidden" name="id" value="${title}">
+                  <input type="submit" value="delete">
+                </form>`);
+                //버튼 클릭시 삭제 바로 수행돼야하므로 링크를 사용하면 안됨.. 링크타고 삭제할 수 있기 때문에
             response.writeHead(200);
             response.end(template); //출력할 페이지에 들어갈 내용
           });
@@ -110,6 +118,24 @@ var app = http.createServer(function(request,response){
         response.end(template); //출력할 페이지에 들어갈 내용
       });
   });
+}else if (pathname === '/update_process') {
+    var body = '';
+    request.on('data',function (data) {
+      body += data;
+    });
+    request.on('end',function(){
+      var post = qs.parse(body);
+      var id = post.id;
+      var title = post.title;
+      var description = post.description;
+      console.log(post);
+      fs.rename(`data/${id}`,`data/${title}`,function(error){
+        fs.writeFile(`data/${title}`,description,'utf8',function (err) {
+          response.writeHead(302,{Location: `/?id=${title}`});  //redirect
+          response.end();
+        })
+      });
+    });
   }else{
       response.writeHead(404);
       response.end('Not found');
