@@ -4,6 +4,7 @@ var url = require('url');
 var qs = require('querystring');
 //refactoring - 같은 동작(내용)을 효율적으로 변형하는 것.
 var template = require('./lib/template.js');
+var path = require('path');
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -18,14 +19,6 @@ var app = http.createServer(function(request,response){
         fs.readdir('./data',function(error, filelist){
           var title = 'Welcome';
           var description = 'Hello, Node.js';
-
-          /*
-          var list = templateList(filelist);
-          var template = templateHTML(title, list,`<h2>${title}</h2><p>${description}</p>`,`<a href="/create">create</a>`);
-          response.writeHead(200);
-          response.end(template); //출력할 페이지에 들어갈 내용
-          */
-
           var list = template.list(filelist);
           var html = template.html(title, list,`<h2>${title}</h2><p>${description}</p>`,`<a href="/create">create</a>`);
           response.writeHead(200);
@@ -33,7 +26,8 @@ var app = http.createServer(function(request,response){
         })
       }else{
         fs.readdir('./data',function(error, filelist){
-          fs.readFile(`data/${queryData.id}`,'utf8', function(err,description){
+          var filteredId = path.parse(queryData.id).base;
+          fs.readFile(`data/${filteredId}`,'utf8', function(err,description){
             var title = queryData.id;
             var list = template.list(filelist);
             var html = template.html(title, list,
@@ -84,7 +78,8 @@ var app = http.createServer(function(request,response){
     });
   }else if (pathname==='/update') {
     fs.readdir('./data',function(error, filelist){
-      fs.readFile(`data/${queryData.id}`,'utf8', function(err,description){
+      var filteredId = path.parse(queryData.id).base;
+      fs.readFile(`data/${filteredId}`,'utf8', function(err,description){
         var title = queryData.id;
         var list = template.list(filelist);
         var html = template.html(title, list,`<form class="" action="/update_process" method="post">
@@ -127,7 +122,8 @@ var app = http.createServer(function(request,response){
       request.on('end',function(){
         var post = qs.parse(body);
         var id = post.id;
-        fs.unlink(`data/${id}`,function(error){
+        var filteredId = path.parse(id).base;
+        fs.unlink(`data/${filteredId}`,function(error){
           response.writeHead(302,{Location: `/`});  //redirect
           response.end();
         })
