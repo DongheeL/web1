@@ -5,6 +5,7 @@ var qs = require('querystring');
 //refactoring - 같은 동작(내용)을 효율적으로 변형하는 것.
 var template = require('./lib/template.js');
 var path = require('path');
+var sanitizeHtml = require('sanitize-html');  //npm의 모듈 (입력된 데이터에 태그가 포함된 경우 태그를 삭제처리, 옵션(allowedTags)을 줌으로써 허용할 태그를 지정할 수 있다.)
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -29,13 +30,17 @@ var app = http.createServer(function(request,response){
           var filteredId = path.parse(queryData.id).base;
           fs.readFile(`data/${filteredId}`,'utf8', function(err,description){
             var title = queryData.id;
+            var sanitizedTitle = sanitizeHtml(title);
+            var sanitizedDescription = sanitizeHtml(description, {
+              allowedTags:['h1']
+            });
             var list = template.list(filelist);
             var html = template.html(title, list,
-              `<h2>${title}</h2><p>${description}</p>`,
+              `<h2>${sanitizedTitle}</h2><p>${sanitizedDescription}</p>`,
               ` <a href="/create">create</a>
-                <a href="/update?id=${title}">update</a>
+                <a href="/update?id=${sanitizedTitle}">update</a>
                 <form action="delete_process" method="post">
-                  <input type="hidden" name="id" value="${title}">
+                  <input type="hidden" name="id" value="${sanitizedTitle}">
                   <input type="submit" value="delete">
                 </form>`);
                 //버튼 클릭시 삭제 바로 수행돼야하므로 링크를 사용하면 안됨.. 링크타고 삭제할 수 있기 때문에
