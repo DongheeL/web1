@@ -7,6 +7,7 @@ var template = require('./lib/template.js');
 var path = require('path');
 var sanitizeHtml = require('sanitize-html');  //npm의 모듈 (입력된 데이터에 태그가 포함된 경우 태그를 삭제처리, 옵션(allowedTags)을 줌으로써 허용할 태그를 지정할 수 있다.)
 var mysql      = require('mysql');  //nodejs에 mysql모듈 추가해서 사용가능
+const { authorSelect } = require('./lib/template.js');
 var db = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -62,21 +63,28 @@ var app = http.createServer(function(request,response){
     }
   }else if (pathname === '/create') {
     db.query(`SELECT * FROM topic`,function(error,topics){
-      var title = 'Create';
-      var list = template.list(topics);
-      var html = template.html(title, list,`
-      <form class="" action="http://localhost:3000/create_process" method="post">
-        <p><input type="text" name="title" placeholder="title"></p>
-        <p>
-          <textarea name="description" placeholder="description"></textarea>
-        </p>
-        <p> 
-          <input type="submit">
-        </p>
-      </form>
-      `,`<a href="/create">create</a>`);
-      response.writeHead(200);
-      response.end(html);
+      db.query('SELECT * FROM author',function(error2, authors){
+        console.log(authors);
+ 
+        var title = 'Create';
+        var list = template.list(topics);
+        var html = template.html(title, list,`
+        <form class="" action="http://localhost:3000/create_process" method="post">
+          <p><input type="text" name="title" placeholder="title"></p>
+          <p>
+            <textarea name="description" placeholder="description"></textarea>
+          </p>
+          <p>
+            ${template.authorSelect(authors)}
+          </p>
+          <p> 
+            <input type="submit">
+          </p>
+        </form>
+        `,`<a href="/create">create</a>`);
+        response.writeHead(200);
+        response.end(html);
+      })
     })
   }else if (pathname === '/create_process') {
     var body = '';
@@ -87,7 +95,7 @@ var app = http.createServer(function(request,response){
       var post = qs.parse(body);
       var title = post.title;
       var description = post.description;
-      db.query(`INSERT INTO topic (title, description, created, author_id) VALUES(?,?,NOW(),?)`,[title,description,1],
+      db.query(`INSERT INTO topic (title, description, created, author_id) VALUES(?,?,NOW(),?)`,[title,description,post.author],
       function(error, results){
         if(error){
           throw error;
@@ -105,22 +113,27 @@ var app = http.createServer(function(request,response){
       if(error2){
         throw error2;
       }
-      var title = topic[0].title;
-      var description = topic[0].description;
-      var list = template.list(topics);
-      var html = template.html(title, list,`<form class="" action="/update_process" method="post">
-      <input type="hidden" name="id" value="${topic[0].id}">
-      <p><input type="text" name="title" placeholder="title" value="${title}"></p>
-      <p>
-        <textarea name="description" placeholder="description">${description}</textarea>
-      </p>
-      <p>
-        <input type="submit">
-      </p>
-      </form>`,`<a href="/create">create</a> <a href="/update?id=${title}">update</a>`);
-      response.writeHead(200);
-      response.end(html);
-    })
+      db.query('SELECT * FROM author',function(error2, authors){
+        var title = topic[0].title;
+        var description = topic[0].description;
+        var list = template.list(topics);
+        var html = template.html(title, list,`<form class="" action="/update_process" method="post"> 
+        <input type="hidden" name="id" value="${topic[0].id}">
+        <p><input type="text" name="title" placeholder="title" value="${title}"></p>
+        <p>
+          <textarea name="description" placeholder="description">${description}</textarea>
+        </p>
+        <p>
+          ${template.authorSelect(authors,topic[0].author_id)}
+        </p>
+        <p>
+          <input type="submit">
+        </p>
+        </form>`,`<a href="/create">create</a> <a href="/update?id=${title}">update</a>`);
+        response.writeHead(200);
+        response.end(html);
+      });
+    });
   })
   }else if (pathname === '/update_process') {
     var body = '';
@@ -133,7 +146,7 @@ var app = http.createServer(function(request,response){
       console.log(id);
       var title = post.title;
       var description = post.description;
-      db.query(`UPDATE topic SET title = ?, description = ? WHERE id = ?`,[title,description,id],
+      db.query(`UPDATE topic SET title = ?, description = ?, author_id=? WHERE id = ?`,[title,description,post.author,id],
       function(error, results){
         if(error){
           throw error;
