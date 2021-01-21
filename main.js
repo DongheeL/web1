@@ -4,6 +4,7 @@ var qs = require('querystring');
 //refactoring - 같은 동작(내용)을 효율적으로 변형하는 것.
 var template = require('./lib/template.js');
 var db = require('./lib/db');
+var topic = require('./lib/topic');
 
 var app = http.createServer(function(request,response){
   var _url = request.url;
@@ -13,14 +14,7 @@ var app = http.createServer(function(request,response){
 
   if(pathname ==='/'){
     if(queryData.id === undefined){
-      db.query(`SELECT * FROM topic`,function(error,topics){
-        var title = 'Welcome';
-        var description = 'Hello, Node.js';
-        var list = template.list(topics);
-        var html = template.html(title, list,`<h2>${title}</h2><p>${description}</p>`,`<a href="/create">create</a>`);
-        response.writeHead(200);
-        response.end(html);
-      })
+      topic.home(request,response);
     }else{
       db.query(`SELECT * FROM topic`,function(error,topics){
         if(error){
