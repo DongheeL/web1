@@ -1,21 +1,9 @@
 var http = require('http');
-var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 //refactoring - 같은 동작(내용)을 효율적으로 변형하는 것.
 var template = require('./lib/template.js');
-var path = require('path');
-var sanitizeHtml = require('sanitize-html');  //npm의 모듈 (입력된 데이터에 태그가 포함된 경우 태그를 삭제처리, 옵션(allowedTags)을 줌으로써 허용할 태그를 지정할 수 있다.)
-var mysql      = require('mysql');  //nodejs에 mysql모듈 추가해서 사용가능
-const { authorSelect } = require('./lib/template.js');
-var db = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'dlehdgmlpw',
-  database : 'opentutorials'
-});
-db.connect();
-
+var db = require('./lib/db');
 
 var app = http.createServer(function(request,response){
   var _url = request.url;
