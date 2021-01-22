@@ -1,0 +1,27 @@
+<table>
+    <tr>
+        <td>name</td>
+        <td>profile</td>
+        <td>update</td>
+        <td>delete</td>
+    </tr>
+</table>
+<form action="/author/create_process" method="POST">
+    <p>
+        <input type="text" name="name" placeholder="name">
+    </p>
+    <p>
+        <textarea name="profile" placeholder="description"></textarea>
+    </p>
+    <p>
+        <input type="submit">
+    </p>
+</form>
+<style>
+    td{
+        border: solid 1px;
+    }
+    table{
+        border-collapse: collapse;
+    }
+</style>
